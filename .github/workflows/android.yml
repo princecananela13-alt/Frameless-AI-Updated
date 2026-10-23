@@ -1,0 +1,44 @@
+
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '*.zip'
+      - '.github/workflows/android.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download repository
+        uses: actions/checkout@v4
+
+      - name: Extract source ZIP
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip
+          mkdir source
+          unzip -o Frameless_AI-app-source-v1_3_2.zip -d source
+          find source -name gradlew -exec chmod +x {} \;
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build APK
+        run: |
+          cd source
+          PROJECT_DIR=$(find . -name gradlew -type f | head -1)
+          cd "$(dirname "$PROJECT_DIR")"
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Frameless-AI-APK
+          path: source/**/*.apk
+          
